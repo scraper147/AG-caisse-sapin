@@ -26,9 +26,7 @@ Caisse de vente de sapins pour tablette Android. Elle fonctionne hors ligne une 
 2. Ouvrez l'adresse dans **Chrome**.
 3. Menu **⋮ → Installer l'application** (ou **Ajouter à l'écran d'accueil**).
 4. Lancez l'app depuis l'icône Agri-Garden.
-5. Dans **Paramètres de la tablette** :
-   - **Charger un catalogue…** et choisissez le fichier `catalogue.json` ;
-   - choisissez le **point de vente** de la tablette, puis **Enregistrer**.
+5. Le catalogue se charge tout seul. Dans **Paramètres de la tablette**, choisissez le **point de vente** de la tablette, puis **Enregistrer**.
 
 À partir de là, l'app fonctionne sans internet.
 
@@ -39,7 +37,14 @@ Les tablettes prennent la nouvelle version la prochaine fois qu'elles ouvrent l'
 
 ## Mettre à jour les prix ou les produits
 
-Pas besoin de toucher à GitHub. Envoyez le nouveau `catalogue.json` sur la tablette, puis chargez-le via **Paramètres de la tablette → Charger un catalogue…**.
+Le catalogue est le fichier `catalogue.json` du dépôt.
+
+1. Modifiez `catalogue.json` (ou remplacez-le par celui exporté de l'app admin).
+2. **Augmentez le numéro `version`** (par exemple de 2 à 3), sinon les tablettes ne verront pas le changement.
+3. Déposez-le sur GitHub (**Add file → Upload files**, puis **Commit**).
+
+À la prochaine ouverture avec du réseau, chaque tablette affiche « Nouveau catalogue disponible » et propose de l'installer.
+Le bouton **Paramètres de la tablette → Vérifier les mises à jour** force la vérification.
 
 ## Bonnes pratiques
 

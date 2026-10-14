@@ -1,0 +1,126 @@
+{
+  "format": "agri-garden-caisse/catalogue",
+  "formatVersion": 1,
+  "version": 1,
+  "date": "2026-10-13",
+  "exemple": true,
+  "pointsDeVente": [
+    {
+      "id": "pdv1",
+      "nom": "Point de vente 1",
+      "actif": true
+    },
+    {
+      "id": "pdv2",
+      "nom": "Point de vente 2",
+      "actif": true
+    },
+    {
+      "id": "pdv3",
+      "nom": "Point de vente 3",
+      "actif": true
+    },
+    {
+      "id": "pdv4",
+      "nom": "Point de vente 4",
+      "actif": true
+    }
+  ],
+  "categories": [
+    {
+      "id": "nord",
+      "nom": "Nordmann",
+      "ordre": 1,
+      "actif": true,
+      "produits": [
+        {
+          "id": "n1",
+          "libelle": "100–125 cm",
+          "prix": 39,
+          "ordre": 1,
+          "actif": true
+        },
+        {
+          "id": "n2",
+          "libelle": "125–150 cm",
+          "prix": 49,
+          "ordre": 2,
+          "actif": true
+        },
+        {
+          "id": "n3",
+          "libelle": "150–175 cm",
+          "prix": 59,
+          "ordre": 3,
+          "actif": true
+        },
+        {
+          "id": "n4",
+          "libelle": "175–200 cm",
+          "prix": 69,
+          "ordre": 4,
+          "actif": true
+        },
+        {
+          "id": "n5",
+          "libelle": "200–250 cm",
+          "prix": 89,
+          "ordre": 5,
+          "actif": true
+        }
+      ]
+    },
+    {
+      "id": "epi",
+      "nom": "Épicéa",
+      "ordre": 2,
+      "actif": true,
+      "produits": [
+        {
+          "id": "e1",
+          "libelle": "100–150 cm",
+          "prix": 25,
+          "ordre": 1,
+          "actif": true
+        },
+        {
+          "id": "e2",
+          "libelle": "150–200 cm",
+          "prix": 35,
+          "ordre": 2,
+          "actif": true
+        }
+      ]
+    },
+    {
+      "id": "acc",
+      "nom": "Accessoires",
+      "ordre": 3,
+      "actif": true,
+      "prefixe": false,
+      "produits": [
+        {
+          "id": "a1",
+          "libelle": "Croix en bois",
+          "prix": 10,
+          "ordre": 1,
+          "actif": true
+        },
+        {
+          "id": "a2",
+          "libelle": "Demi-bûche",
+          "prix": 12,
+          "ordre": 2,
+          "actif": true
+        },
+        {
+          "id": "a3",
+          "libelle": "Pied métal",
+          "prix": 15,
+          "ordre": 3,
+          "actif": false
+        }
+      ]
+    }
+  ]
+}

@@ -103,7 +103,6 @@ pre.json{flex:1;margin:0;overflow:auto;background:#1F271A;color:#E4EED8;border-r
 </head>
 <body>
 <div id="app"></div>
-<input type="file" id="catfile" accept=".json,application/json" hidden>
 <script>
 (function () {
 'use strict';
@@ -212,7 +211,7 @@ var A = {
   goSetup: function () { S.screen = 'setup'; S.pending = S.placeId; },
   pickPending: function (id) { S.pending = id; },
   saveSetup: function () { S.placeId = S.pending; S.screen = 'home'; persist(); },
-  goHome: function () { S.screen = 'home'; S.menu = false; },
+  goHome: function () { S.screen = 'home'; S.menu = false; if (S.siteUpdate && !S.modal) { S.importing = S.siteUpdate; S.modal = 'import'; } },
   openPos: function () { S.screen = 'pos'; S.tab = 'caisse'; S.openedDate = today(); persist(); },
   fullscreen: function () { var el = document.documentElement; (el.requestFullscreen || el.webkitRequestFullscreen || function () {}).call(el); },
   tab: function (t) { S.tab = t; S.menu = false; },
@@ -240,12 +239,12 @@ var A = {
   },
   removeDisc: function () { if (S.discTarget === 'ticket') S.ticketDisc = null; else S.cart[S.discTarget].disc = null; S.modal = null; },
   close: function () { S.modal = null; },
-  pickFile: function () { var f = document.getElementById('catfile'); f.value = ''; f.click(); },
+  checkCatalogue: function () { loadSiteCatalogue(true); },
   installCatalogue: function () {
     var im = S.importing;
     try { localStorage.setItem(CAT_KEY, JSON.stringify(im.raw)); } catch (e) {}
     CATALOGUE = im.cat;
-    S.cat = CATALOGUE.categories[0].id; S.cart = []; S.ticketDisc = null; S.modal = null; S.importing = null;
+    S.cat = CATALOGUE.categories[0].id; S.cart = []; S.ticketDisc = null; S.modal = null; S.importing = null; S.siteUpdate = null;
     if (S.placeId && !findPlace(S.placeId)) { S.placeId = null; S.pending = null; persist(); }
     if (S.pending && !findPlace(S.pending)) S.pending = null;
     toast(catalogueLabel(CATALOGUE) + ' installé');
@@ -293,7 +292,7 @@ function vHome() {
     '<img src="' + LOGO_FULL + '" alt="Agri-Garden by Xavier Vaerman" style="width:min(420px,60vw)">' +
     (!CATALOGUE
       ? '<button class="btn btn-primary btn-big" data-a="goSetup">Configurer la tablette</button>' +
-        '<div class="sub">Première utilisation : chargez le catalogue puis choisissez le point de vente.</div>'
+        '<div class="sub">' + (S.catLoading ? 'Chargement du catalogue…' : 'Catalogue introuvable : connectez la tablette à internet et rouvrez l\u2019app.') + '</div>'
       : p
       ? '<button class="btn btn-primary btn-big" data-a="openPos">' + (opened ? 'Reprendre la caisse' : 'Ouvrir la caisse') + '</button>' +
         '<div style="font-size:18px;font-weight:700">' + esc(p.nom) + '</div>'
@@ -310,7 +309,7 @@ function vHome() {
 
 function vSetup() {
   var c = CATALOGUE;
-  var info = c ? '<span class="sub">' + c.categories.length + ' catégories · ' + countProducts(c) + ' produits · ' + c.pointsDeVente.length + ' points de vente</span>' : '<span class="sub">Chargez le fichier catalogue.json pour commencer.</span>';
+  var info = c ? '<span class="sub">' + c.categories.length + ' catégories · ' + countProducts(c) + ' produits · ' + c.pointsDeVente.length + ' points de vente</span>' : '<span class="sub">Pas encore chargé : la tablette doit avoir du réseau.</span>';
   var places = c ? '<div class="grid2">' + c.pointsDeVente.map(function (p) {
         return '<button class="choice' + (S.pending === p.id ? ' on' : '') + '" data-a="pickPending" data-v="' + esc(p.id) + '">' + esc(p.nom) + '</button>';
       }).join('') + '</div>' : '<div class="empty" style="padding:16px;border:1px dashed var(--line2);border-radius:12px">Disponible après le chargement du catalogue.</div>';
@@ -321,9 +320,9 @@ function vSetup() {
       '<div class="row" style="gap:16px;padding:14px 16px;border:1px solid var(--line);border-radius:12px;background:var(--ground)">' +
         '<div style="display:flex;flex-direction:column;gap:2px"><strong style="font-size:17px">' + esc(catalogueLabel(c)) + '</strong>' +
         info + '</div>' +
-        '<button class="btn" data-a="pickFile" style="flex-shrink:0">Charger un catalogue…</button>' +
+        '<button class="btn" data-a="checkCatalogue" style="flex-shrink:0"' + (S.catLoading ? ' disabled' : '') + '>' + (S.catLoading ? 'Vérification…' : 'Vérifier les mises à jour') + '</button>' +
       '</div>' +
-      '<div class="sub">Sélectionnez le fichier catalogue.json reçu (Téléchargements ou pièce jointe).</div>' +
+      '<div class="sub">Le catalogue est fourni avec l\u2019application et se met à jour automatiquement à l\u2019ouverture quand la tablette a du réseau.</div>' +
     '</section>' +
     '<section style="display:flex;flex-direction:column;gap:12px">' +
       '<h2 style="margin:0;font-size:19px;font-weight:800">Point de vente</h2>' +
@@ -338,16 +337,16 @@ function vSetup() {
 function vImport() {
   var im = S.importing;
   if (im.error) {
-    return '<div class="overlay"><div class="modal"><h2>Fichier non valide</h2>' +
+    return '<div class="overlay"><div class="modal"><h2>Catalogue non valide</h2>' +
       '<div class="result ko" style="font-size:16px;display:block">' + esc(im.error) + '</div>' +
-      '<div class="sub">Fichier : ' + esc(im.fileName) + '</div>' +
+      '<div class="sub">Le catalogue actuel reste en place. Prévenez la personne qui gère l\u2019application.</div>' +
       '<div class="actions"><button class="btn" data-a="close">Fermer</button></div></div></div>';
   }
   var c = im.cat, warns = [];
-  if (CATALOGUE && !CATALOGUE.exemple && c.version <= CATALOGUE.version) warns.push('Ce catalogue (v' + c.version + ') n’est pas plus récent que celui installé (v' + CATALOGUE.version + ').');
   if (S.placeId && !c.pointsDeVente.some(function (p) { return p.id === S.placeId; })) warns.push('Le point de vente de cette tablette n’existe pas dans ce catalogue : il faudra le choisir à nouveau.');
   if (S.cart.length) warns.push('Le panier en cours sera vidé.');
-  return '<div class="overlay"><div class="modal"><h2>Installer ce catalogue ?</h2>' +
+  return '<div class="overlay"><div class="modal"><h2>Nouveau catalogue disponible</h2>' +
+    '<div class="sub">Installé actuellement : ' + esc(catalogueLabel(CATALOGUE)) + '</div>' +
     '<div style="display:flex;flex-direction:column;gap:4px;padding:14px 16px;border:1px solid var(--line);border-radius:12px">' +
       '<strong style="font-size:18px">' + esc(catalogueLabel(c)) + '</strong>' +
       '<span class="sub">' + c.categories.map(function (k) { return esc(k.nom) + ' (' + k.produits.length + ')'; }).join(' · ') + '</span>' +
@@ -355,7 +354,7 @@ function vImport() {
     '</div>' +
     warns.map(function (w) { return '<div style="padding:10px 14px;border-radius:10px;background:#FBEDE3;color:#7A3D00;font-weight:700;font-size:15px">' + w + '</div>'; }).join('') +
     '<div class="sub">Les ventes déjà enregistrées ne changent pas : elles gardent le nom et le prix de chaque produit.</div>' +
-    '<div class="actions"><button class="btn" data-a="close">Annuler</button><button class="btn btn-primary" data-a="installCatalogue">Installer</button></div></div></div>';
+    '<div class="actions"><button class="btn" data-a="close">Plus tard</button><button class="btn btn-primary" data-a="installCatalogue">Installer</button></div></div></div>';
 }
 
 function vCaisse() {
@@ -476,19 +475,36 @@ document.addEventListener('input', function (e) {
   var f = e.target.dataset && e.target.dataset.f;
   if (f) { S[f] = e.target.value; render(); }
 });
-document.getElementById('catfile').addEventListener('change', function (e) {
-  var file = e.target.files && e.target.files[0]; if (!file) return;
-  var reader = new FileReader();
-  reader.onload = function () {
-    var raw = null, cat = null, error = null;
-    try { raw = JSON.parse(reader.result); cat = normalizeCatalogue(raw); }
-    catch (err) { error = err instanceof SyntaxError ? 'Le fichier n’est pas un JSON lisible.' : err.message; }
-    S.importing = { raw: raw, cat: cat, error: error, fileName: file.name }; S.modal = 'import'; render();
-  };
-  reader.onerror = function () { S.importing = { error: 'Impossible de lire le fichier.', fileName: file.name }; S.modal = 'import'; render(); };
-  reader.readAsText(file);
-});
+// Catalogue fourni avec l'application (catalogue.json à côté de index.html)
+function installCat(raw, cat) {
+  try { localStorage.setItem(CAT_KEY, JSON.stringify(raw)); } catch (e) {}
+  CATALOGUE = cat; S.cat = cat.categories[0].id;
+  if (S.placeId && !findPlace(S.placeId)) { S.placeId = null; persist(); }
+}
+function loadSiteCatalogue(manual) {
+  S.catLoading = true; render();
+  fetch('catalogue.json?t=' + Date.now(), { cache: 'no-store' })
+    .then(function (r) { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); })
+    .then(function (raw) {
+      S.catLoading = false;
+      var cat;
+      try { cat = normalizeCatalogue(raw); }
+      catch (err) { S.importing = { error: err.message }; S.modal = 'import'; render(); return; }
+      if (!CATALOGUE) { installCat(raw, cat); toast(catalogueLabel(cat) + ' installé'); }
+      else if (cat.version !== CATALOGUE.version || cat.exemple !== CATALOGUE.exemple) {
+        S.siteUpdate = { raw: raw, cat: cat };
+        if (S.screen !== 'pos' && !S.modal) { S.importing = S.siteUpdate; S.modal = 'import'; }
+      } else if (manual) toast('Le catalogue est à jour (' + catalogueLabel(CATALOGUE) + ')');
+      render();
+    })
+    .catch(function () {
+      S.catLoading = false;
+      if (manual) toast('Pas de réseau : impossible de vérifier le catalogue');
+      render();
+    });
+}
 render();
+loadSiteCatalogue(false);
 // Stockage protégé : Chrome n'efface pas ces données de lui-même
 if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(function () {}); }
 // Fonctionnement hors ligne

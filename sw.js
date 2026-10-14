@@ -1,8 +1,8 @@
 /* Caisse Agri-Garden – fonctionnement hors ligne.
    Avec réseau : on prend la dernière version publiée (et on la garde en cache).
    Sans réseau : on sert la version en cache. */
-var CACHE = 'caisse-agri-garden-v1';
-var FILES = ['./', './index.html', './manifest.webmanifest',
+var CACHE = 'caisse-agri-garden-v2';
+var FILES = ['./', './index.html', './manifest.webmanifest', './catalogue.json',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png'];
 
 self.addEventListener('install', function (e) {
@@ -27,7 +27,7 @@ self.addEventListener('fetch', function (e) {
     }
     var timer = setTimeout(fromCache, 3000); // réseau trop lent : on n'attend pas
     fetch(e.request).then(function (res) {
-      if (res && res.ok) { var copy = res.clone(); caches.open(CACHE).then(function (c) { c.put(e.request, copy); }); }
+      if (res && res.ok) { var copy = res.clone(), u = new URL(e.request.url); caches.open(CACHE).then(function (c) { c.put(u.origin + u.pathname, copy); }); }
       clearTimeout(timer);
       if (!done) { done = true; resolve(res); }
     }).catch(function () { clearTimeout(timer); fromCache(); });
