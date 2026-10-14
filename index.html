@@ -169,37 +169,47 @@ var S = {
   screen: 'home', tab: 'caisse', menu: false, placeId: null, pending: null, openedDate: null,
   cat: CATALOGUE ? CATALOGUE.categories[0].id : null, cart: [], ticketDisc: null, modal: null,
   discTarget: null, discType: '%', discVal: '', freeLabel: '', freePrice: '',
-  payMode: 'cash', received: '', mix: '', sales: [], salesDate: null, toast: ''
+  payMode: 'cash', received: '', mix: '', days: {}, toast: ''
 };
 // Mémoire locale (simule le fichier de la tablette)
 try {
   var saved = JSON.parse(localStorage.getItem(STORE_KEY) || 'null');
   if (saved) {
     S.placeId = saved.placeId || null;
-    if (saved.salesDate === isoDate(new Date())) { S.sales = saved.sales || []; S.salesDate = saved.salesDate; S.openedDate = saved.openedDate; }
+    S.openedDate = saved.openedDate || null;
+    // Ventes par jour : { "AAAA-MM-JJ": [ventes] } (reprise de l'ancien format à un seul jour)
+    S.days = saved.days || {};
+    if (saved.sales && saved.sales.length && saved.salesDate && !S.days[saved.salesDate]) S.days[saved.salesDate] = saved.sales;
   }
 } catch (e) {}
 function persist() {
-  try { localStorage.setItem(STORE_KEY, JSON.stringify({ placeId: S.placeId, sales: S.sales, salesDate: S.salesDate, openedDate: S.openedDate })); } catch (e) {}
+  try { localStorage.setItem(STORE_KEY, JSON.stringify({ placeId: S.placeId, days: S.days, openedDate: S.openedDate })); } catch (e) {}
 }
 
 function lineTotal(l) { return applyDisc(l.price * l.qty, l.disc); }
 function subtotal() { return S.cart.reduce(function (a, l) { return a + lineTotal(l); }, 0); }
 function total() { return applyDisc(up5(subtotal()), S.ticketDisc); }
 function today() { return isoDate(new Date()); }
-function fileName() { var p = findPlace(S.placeId); return 'ventes_' + today() + '_' + slug(p ? p.nom : '') + '.json'; }
+function salesOf(date) { return S.days[date || today()] || []; }
+function placeOf(date) {
+  var s = salesOf(date);
+  if (s.length && s[0].pointDeVente) return s[0].pointDeVente;
+  var p = findPlace(S.placeId); return p ? { id: p.id, nom: p.nom } : null;
+}
+function fileName(date) { var p = placeOf(date); return 'ventes_' + (date || today()) + '_' + slug(p ? p.nom : '') + '.json'; }
 
-function dayFile() {
-  var p = findPlace(S.placeId);
+function dayFile(date) {
+  date = date || today();
+  var sales = salesOf(date);
   return {
-    format: 'agri-garden-caisse/ventes', formatVersion: 1, date: today(),
-    pointDeVente: p ? { id: p.id, nom: p.nom } : null,
+    format: 'agri-garden-caisse/ventes', formatVersion: 1, date: date,
+    pointDeVente: placeOf(date),
     catalogueVersion: CATALOGUE ? CATALOGUE.version : null, miseAJour: isoLocal(new Date()),
-    nombreVentes: S.sales.length,
-    totalJournee: r2(S.sales.reduce(function (a, v) { return a + v.total; }, 0)),
-    totalCash: r2(S.sales.reduce(function (a, v) { return a + v.paiement.cash; }, 0)),
-    totalBancontact: r2(S.sales.reduce(function (a, v) { return a + v.paiement.bancontact; }, 0)),
-    ventes: S.sales
+    nombreVentes: sales.length,
+    totalJournee: r2(sales.reduce(function (a, v) { return a + v.total; }, 0)),
+    totalCash: r2(sales.reduce(function (a, v) { return a + v.paiement.cash; }, 0)),
+    totalBancontact: r2(sales.reduce(function (a, v) { return a + v.paiement.bancontact; }, 0)),
+    ventes: sales
   };
 }
 
@@ -259,9 +269,9 @@ var A = {
     if (S.payMode === 'cash') { pay = { mode: 'cash', cash: r2(t), bancontact: 0 }; msg += ' · À rendre : ' + money(Math.max(0, num(S.received) - t)); }
     else if (S.payMode === 'bc') pay = { mode: 'bancontact', cash: 0, bancontact: r2(t) };
     else { var c = num(S.mix); pay = { mode: 'mixte', cash: r2(c), bancontact: r2(t - c) }; }
-    if (S.salesDate !== today()) { S.sales = []; S.salesDate = today(); }
-    var n = S.sales.length + 1;
-    S.sales.push({
+    var list = S.days[today()] || (S.days[today()] = []);
+    var n = list.length + 1;
+    list.push({
       id: p.id + '-' + today().replace(/-/g, '') + '-' + ('000' + n).slice(-4),
       horodatage: isoLocal(d),
       pointDeVente: { id: p.id, nom: p.nom },
@@ -272,13 +282,15 @@ var A = {
     persist(); toast(msg);
   },
   showJson: function () { S.menu = false; S.modal = 'json'; },
-  download: function () {
-    var blob = new Blob([JSON.stringify(dayFile(), null, 2)], { type: 'application/json' });
-    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = fileName();
+  download: function (date) {
+    date = date || today();
+    var name = fileName(date);
+    var blob = new Blob([JSON.stringify(dayFile(date), null, 2)], { type: 'application/json' });
+    var a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = name;
     document.body.appendChild(a); a.click(); setTimeout(function () { URL.revokeObjectURL(a.href); a.remove(); }, 500);
-    S.menu = false; toast(fileName() + ' téléchargé');
+    S.menu = false; toast(name + ' téléchargé');
   },
-  resetDemo: function () { S.sales = []; S.cart = []; S.ticketDisc = null; S.openedDate = null; S.menu = false; persist(); toast('Ventes de test effacées'); }
+  showDays: function () { S.menu = false; S.modal = 'days'; }
 };
 
 /* ---------- Vues ---------- */
@@ -385,7 +397,7 @@ function vCaisse() {
 function vHist() {
   var d = new Date();
   var html = '<div class="hist"><h2>Ventes du ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() + '</h2>';
-  var sales = (S.salesDate === today() ? S.sales : []).slice().reverse();
+  var sales = salesOf(today()).slice().reverse();
   if (!sales.length) return html + '<div class="empty" style="padding:60px">Aucune vente aujourd\'hui</div></div>';
   html += '<div class="table">';
   sales.forEach(function (v) {
@@ -404,7 +416,7 @@ function vPos() {
     '<div style="flex:1"></div><div class="place">' + ICON_PIN + '<span>' + esc(p ? p.nom : '') + ' · ' + pad(d.getDate()) + '/' + pad(d.getMonth() + 1) + '/' + d.getFullYear() + '</span></div>' +
     '<button class="iconbtn" data-a="toggleMenu" aria-label="Menu">' + ICON_DOTS + '</button></div>' +
     (S.tab === 'caisse' ? vCaisse() : vHist()) + '</div>' +
-    (S.menu ? '<div class="menu"><button data-a="download">Exporter / partager les ventes du jour</button><button data-a="showJson">Voir le fichier JSON du jour</button><button data-a="goHome">Retour à l\'accueil</button><div class="meta">' + catalogueLabel(CATALOGUE) + '</div></div>' : '');
+    (S.menu ? '<div class="menu"><button data-a="download">Exporter / partager les ventes du jour</button><button data-a="showJson">Voir le fichier JSON du jour</button><button data-a="showDays">Ventes des jours précédents</button><button data-a="goHome">Retour à l\'accueil</button><div class="meta">' + catalogueLabel(CATALOGUE) + '</div></div>' : '');
 }
 
 function vFree() {
@@ -445,8 +457,25 @@ function vPay() {
   return html + '<div class="actions"><button class="btn" data-a="close" style="height:60px">Retour</button><button class="btn btn-primary" data-a="validate" style="height:60px;font-size:20px;padding:0 36px"' + (can ? '' : ' disabled') + '>Valider la vente</button></div></div></div>';
 }
 
+function vDays() {
+  var dates = Object.keys(S.days).filter(function (d) { return S.days[d] && S.days[d].length; }).sort().reverse();
+  var rows = dates.map(function (d) {
+    var s = S.days[d], tot = s.reduce(function (a, v) { return a + v.total; }, 0);
+    var isToday = d === today();
+    return '<div class="row" style="gap:12px;padding:12px 4px;border-bottom:1px solid var(--soft)">' +
+      '<div style="display:flex;flex-direction:column;gap:2px"><strong style="font-size:18px">' + frDate(d) + (isToday ? ' <span class="sub">(aujourd’hui)</span>' : '') + '</strong>' +
+      '<span class="sub">' + s.length + ' vente' + (s.length > 1 ? 's' : '') + ' · ' + money(tot) + '</span></div>' +
+      '<button class="btn" data-a="download" data-v="' + d + '" style="flex-shrink:0">Télécharger</button></div>';
+  }).join('');
+  return '<div class="overlay"><div class="modal" style="width:min(640px,96vw);max-height:90%">' +
+    '<div class="row"><h2>Ventes enregistrées</h2><button class="btn" data-a="close">Fermer</button></div>' +
+    '<div class="sub">Les ventes de chaque jour restent dans la tablette. Téléchargez à nouveau le fichier d’un jour si besoin.</div>' +
+    '<div style="overflow-y:auto">' + (rows || '<div class="empty">Aucune vente enregistrée</div>') + '</div>' +
+    '</div></div>';
+}
+
 function vJson() {
-  return '<div class="overlay"><div class="modal" style="width:min(900px,96vw);height:92%"><div class="row"><div><h2>Fichier du jour</h2><div class="sub">Documents/CaisseSapins/' + esc(fileName()) + '</div></div>' +
+  return '<div class="overlay"><div class="modal" style="width:min(900px,96vw);height:92%"><div class="row"><div><h2>Fichier du jour</h2><div class="sub">' + esc(fileName()) + '</div></div>' +
     '<div style="display:flex;gap:10px"><button class="btn" data-a="download">Télécharger</button><button class="btn" data-a="close">Fermer</button></div></div>' +
     '<pre class="json">' + esc(JSON.stringify(dayFile(), null, 2)) + '</pre></div></div>';
 }
@@ -460,6 +489,7 @@ function render() {
   else if (S.modal === 'disc') html += vDisc();
   else if (S.modal === 'pay') html += vPay();
   else if (S.modal === 'json') html += vJson();
+  else if (S.modal === 'days') html += vDays();
   else if (S.modal === 'import') html += vImport();
   if (S.toast) html += '<div class="toast">' + esc(S.toast) + '</div>';
   app.innerHTML = html;

@@ -49,5 +49,6 @@ Le bouton **Paramètres de la tablette → Vérifier les mises à jour** force l
 ## Bonnes pratiques
 
 - Exportez les ventes au moins **deux fois par jour** (midi et soir) : menu **⋮ → Exporter / partager les ventes du jour**.
+- Pour retélécharger le fichier d'un jour précédent : menu **⋮ → Ventes des jours précédents → Télécharger**.
 - N'effacez jamais les données de Chrome sur les tablettes de caisse.
 - Une tablette = un point de vente.
