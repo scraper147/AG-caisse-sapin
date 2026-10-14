@@ -261,9 +261,10 @@ var A = {
   },
   openPay: function () { S.modal = 'pay'; S.payMode = 'cash'; S.received = ''; S.mix = ''; },
   mode: function (m) { S.payMode = m; },
-  bill: function (b) { S.received = String(r2(num(S.received) + +b)).replace('.', ','); },
+  bill: function (b) { var f = S.payMode === 'mix' ? 'mix' : 'received'; S[f] = String(r2(num(S[f]) + +b)).replace('.', ','); },
   exact: function () { S.received = total().toFixed(2).replace('.', ','); },
   resetReceived: function () { S.received = ''; },
+  resetMix: function () { S.mix = ''; },
   validate: function () {
     var t = total(), d = new Date(), p = findPlace(S.placeId), pay, msg = 'Vente enregistrée';
     if (S.payMode === 'cash') { pay = { mode: 'cash', cash: r2(t), bancontact: 0 }; msg += ' · À rendre : ' + money(Math.max(0, num(S.received) - t)); }
@@ -451,8 +452,12 @@ function vPay() {
   } else if (S.payMode === 'bc') {
     html += '<div class="result" style="font-size:18px">Encaissez <strong>&nbsp;' + money(t) + '&nbsp;</strong> sur le terminal, puis validez.</div>';
   } else {
-    html += '<label class="f">Part payée en cash (€)<input type="text" inputmode="decimal" data-f="mix" value="' + esc(S.mix) + '" placeholder="0,00" autocomplete="off"></label>' +
-      '<div class="result"><b>Reste en Bancontact</b><span>' + money(Math.max(0, t - mixC)) + '</span></div>';
+    html += '<div class="sub" style="font-weight:700">Billets reçus (part cash)</div><div class="bills" style="grid-template-columns:repeat(5,minmax(0,1fr))">' +
+      BILLS.map(function (b) { return '<button class="bill" data-a="bill" data-v="' + b + '">' + b + ' €</button>'; }).join('') + '</div>' +
+      '<div style="display:flex;gap:12px;align-items:flex-end"><label class="f" style="flex:1">Part payée en cash (€)<input type="text" inputmode="decimal" data-f="mix" value="' + esc(S.mix) + '" placeholder="0,00" autocomplete="off"></label><button class="btn btn-danger" data-a="resetMix">Effacer</button></div>' +
+      (mixC >= t - 0.001 && mixC > 0
+        ? '<div class="result ko"><b>Le cash couvre tout</b><span style="font-size:18px">Choisissez « Cash »</span></div>'
+        : '<div class="result"><b>Reste en Bancontact</b><span>' + money(Math.max(0, t - mixC)) + '</span></div>');
   }
   return html + '<div class="actions"><button class="btn" data-a="close" style="height:60px">Retour</button><button class="btn btn-primary" data-a="validate" style="height:60px;font-size:20px;padding:0 36px"' + (can ? '' : ' disabled') + '>Valider la vente</button></div></div></div>';
 }
