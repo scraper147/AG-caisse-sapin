@@ -1,7 +1,7 @@
 /* Caisse Agri-Garden – fonctionnement hors ligne.
    Avec réseau : on prend la dernière version publiée (et on la garde en cache).
    Sans réseau : on sert la version en cache. */
-var CACHE = 'caisse-agri-garden-v4';
+var CACHE = 'caisse-agri-garden-v6';
 var FILES = ['./', './index.html', './manifest.webmanifest', './catalogue.json',
   './icons/icon-192.png', './icons/icon-512.png', './icons/icon-maskable-512.png'];
 

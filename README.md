@@ -53,4 +53,8 @@ Le bouton **Paramètres de la tablette → Vérifier les mises à jour** force l
 - Exportez les ventes au moins **deux fois par jour** (midi et soir) : menu **⋮ → Exporter / partager les ventes du jour**.
 - Pour retélécharger le fichier d'un jour précédent : menu **⋮ → Ventes des jours précédents → Télécharger**.
 - N'effacez jamais les données de Chrome sur les tablettes de caisse.
+- **Jauge mémoire** : menu **⋮ → Ventes des jours précédents** affiche la place utilisée (« x Mo sur 5 Mo »). Cette mémoire est partagée avec les autres caisses installées sur le même appareil depuis le même compte GitHub.
+- **Bandeau orange à 80 %** : un bandeau « ⚠ Mémoire de l'appareil pleine à x % » apparaît en haut de la caisse et sur l'accueil. Touchez-le, téléchargez les jours non exportés, puis effacez les anciens jours.
+- **Effacer un jour** : bouton **Effacer** (avec confirmation) dans la liste des jours. Il n'apparaît que pour un jour **déjà téléchargé** et jamais pour le jour en cours.
+- **Alerte rouge « Mémoire pleine »** : la dernière vente n'a pas été enregistrée dans l'appareil (elle reste disponible tant que l'app reste ouverte). **Exportez immédiatement les ventes du jour**, puis effacez d'anciens jours déjà exportés avant de continuer.
 - Une tablette = un point de vente.
