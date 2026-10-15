@@ -18,7 +18,9 @@ Caisse de vente de sapins pour tablette Android. Elle fonctionne hors ligne une 
    - Branch : **main**, dossier **/ (root)**
    - Cliquez sur **Save**
 7. Attendez 1 à 2 minutes. L'adresse s'affiche en haut de la page Pages :
-   `https://<votre-compte>.github.io/caisse-sapins/`
+   `https://<votre-compte>.github.io/<nom-du-dépôt>/` (actuellement https://scraper147.github.io/sapin/)
+
+⚠️ Une fois les appareils installés, ne renommez plus le dépôt : l'adresse changerait et les apps installées ne s'ouvriraient plus.
 
 ## Installation sur une tablette ou un smartphone
 
@@ -27,7 +29,7 @@ L'app détecte toute seule si elle tourne sur un smartphone (plus petit côté d
 1. Connectez la tablette à internet (wifi ou partage de connexion).
 2. Ouvrez l'adresse dans **Chrome**.
 3. Menu **⋮ → Installer l'application** (ou **Ajouter à l'écran d'accueil**).
-4. Lancez l'app depuis l'icône Agri-Garden.
+4. Lancez l'app depuis l'icône **« Caisse Sapins »**.
 5. Le catalogue se charge tout seul. Dans **Paramètres de la tablette**, choisissez le **point de vente** de la tablette, puis **Enregistrer**.
 
 À partir de là, l'app fonctionne sans internet.
@@ -35,6 +37,7 @@ L'app détecte toute seule si elle tourne sur un smartphone (plus petit côté d
 ## Mettre à jour l'app
 
 Remplacez les fichiers sur GitHub (**Add file → Upload files**, puis **Commit**).
+**À chaque nouvelle version, augmentez le numéro de cache dans `sw.js`** (`PREFIX + 'v7'` → `'v8'`…).
 Les tablettes prennent la nouvelle version la prochaine fois qu'elles ouvrent l'app avec du réseau.
 
 ## Mettre à jour les prix ou les produits
