@@ -37,7 +37,7 @@ L'app détecte toute seule si elle tourne sur un smartphone (plus petit côté d
 ## Mettre à jour l'app
 
 Remplacez les fichiers sur GitHub (**Add file → Upload files**, puis **Commit**).
-**À chaque nouvelle version, augmentez le numéro de cache dans `sw.js`** (`PREFIX + 'v7'` → `'v8'`…).
+**À chaque nouvelle version, augmentez le numéro de cache dans `sw.js`** (`PREFIX + 'v8'` → `'v9'`…).
 Les tablettes prennent la nouvelle version la prochaine fois qu'elles ouvrent l'app avec du réseau.
 
 ## Mettre à jour les prix ou les produits
