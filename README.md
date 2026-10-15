@@ -20,7 +20,9 @@ Caisse de vente de sapins pour tablette Android. Elle fonctionne hors ligne une 
 7. Attendez 1 à 2 minutes. L'adresse s'affiche en haut de la page Pages :
    `https://<votre-compte>.github.io/caisse-sapins/`
 
-## Installation sur une tablette
+## Installation sur une tablette ou un smartphone
+
+L'app détecte toute seule si elle tourne sur un smartphone (plus petit côté de l'écran < 600 px) et passe alors en affichage compact : produits sur 2 colonnes, panier dans une barre en bas de l'écran.
 
 1. Connectez la tablette à internet (wifi ou partage de connexion).
 2. Ouvrez l'adresse dans **Chrome**.
